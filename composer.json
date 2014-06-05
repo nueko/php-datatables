@@ -8,6 +8,11 @@
             "email": "sumeko@live.com"
         }
     ],
+    "autoload": {
+        "psr-0": {
+            "Sum\\DataTables": "."
+        }
+    },
     "minimum-stability": "dev",
     "require": {
 		"php": ">=5.3.0"
