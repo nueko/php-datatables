@@ -1,0 +1,15 @@
+{
+    "name": "sumeko/php-datatables",
+    "description": "JQuery DataTables Server Side Processing",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Sum",
+            "email": "sumeko@live.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+		"php": ">=5.3.0"
+    }
+}
