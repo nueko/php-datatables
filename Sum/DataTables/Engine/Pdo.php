@@ -13,6 +13,7 @@ class Pdo extends BaseEngine
     private $_having;
     private $join = array();
     private $_where;
+    private $_limited;
     private $_query;
     private $_requestQuery;
 
@@ -142,8 +143,8 @@ class Pdo extends BaseEngine
         if (! empty($this->search['column']))
             $this->_requestQuery .= $glue . implode(' AND ', $this->search['column']);
 
-        empty($this->_groups) OR $this->_query .= " GROUP BY " . $this->_groups;
-        empty($this->_having) OR $this->_query .= " HAVING " . $this->_having;
+        empty($this->_groups) OR $this->_requestQuery .= " GROUP BY " . $this->_groups;
+        empty($this->_having) OR $this->_requestQuery .= " HAVING " . $this->_having;
 
         if ($this->handleOrdering()) {
             $this->_requestQuery .= " ORDER BY ";
@@ -152,7 +153,10 @@ class Pdo extends BaseEngine
                 ($dir !== end($this->order)) AND $this->_requestQuery .= ', ';
             }
         }
-        $this->handlePaging() AND $this->_requestQuery .= " LIMIT {$this->offset},{$this->limit}";
+        if($this->handlePaging()) {
+            $this->_limited = "LIMIT {$this->limit}";
+            $this->offset AND $this->_limited .= " OFFSET {$this->offset}";
+        }
 
         return $this;
     }
@@ -164,17 +168,16 @@ class Pdo extends BaseEngine
         $this->_connection->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_NUM);
 
         $data = $this->_connection->prepare(
-            "SELECT SQL_CALC_FOUND_ROWS {$this->_select} FROM {$this->_table} {$this->_requestQuery}"
+            "SELECT {$this->_select} FROM {$this->_table} {$this->_requestQuery} {$this->_limited}"
         );
 
-        $resFilterLength = $this->_connection->prepare("SELECT FOUND_ROWS()");
+        $resFilterLength = $this->_connection->prepare("SELECT count(*) FROM {$this->_table} {$this->_requestQuery}");
+        $resTotalLength = $this->_connection->prepare("SELECT COUNT(*) FROM {$this->_table} {$this->_query}");
 
-        $resTotalLength = $this->_connection->prepare("SELECT COUNT(1) FROM {$this->_table} {$this->_query}");
-
-        $resFilterLength->execute();
-        $this->output['recordsFiltered'] = $resFilterLength->fetch()[0];
-        $resTotalLength->execute($this->bound);
-        $this->output['recordsTotal'] = $resTotalLength->fetch()[0];
+        $resFilterLength->execute($this->bound);
+        $this->output['recordsFiltered'] = $resFilterLength->fetchColumn();
+        $resTotalLength->execute();
+        $this->output['recordsTotal'] = $resTotalLength->fetchColumn();
         $data->execute($this->bound);
         $this->output['data'] = $data->fetchAll();
         if ($asArray) {

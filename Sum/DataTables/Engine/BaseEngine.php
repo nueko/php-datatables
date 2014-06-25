@@ -8,8 +8,8 @@ abstract class BaseEngine
     private static $_remote = FALSE;
     private static $_request = array();
     protected $columns = array();
-    protected $limit = - 1;
-    protected $offset = 0;
+    protected $limit;
+    protected $offset;
     protected $order = array();
     protected $bound = array();
     protected $search = array();
@@ -30,10 +30,10 @@ abstract class BaseEngine
 
     protected function request($index, $default = NULL)
     {
-        if (! is_array(self::$_request))
+        if (empty(self::$_request))
             self::$_request = $_REQUEST;
 
-        if (! isset(self::$_request[$index]))
+        if (empty(self::$_request[$index]))
             return $default;
 
         return self::$_request[$index];
@@ -96,7 +96,7 @@ abstract class BaseEngine
         $this->output['draw'] = $this->request('draw', 0);
 
         if (isset(self::$_request['start']) AND $this->request('length') != - 1) {
-            $this->offset = $this->request('start');
+            $this->offset = (string) $this->request('start');
             $this->limit  = $this->request('length');
 
             return $this;
